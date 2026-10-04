@@ -5,7 +5,7 @@ description: Build, edit, audit, or repair Anki cards at scale through the Agent
 
 # Bulk Anki work via Agent Connect
 
-Agent Connect is a fork of AnkiConnect that makes large Anki jobs fast, atomic, and reviewable. It serves **everything on port 8766** — the 37 Agent Connect actions *and* the full upstream AnkiConnect surface (decks, models, GUI, `findNotes`, `storeMediaFile`), since it is a fork of the whole codebase. (On Matt's machine stock AnkiConnect is disabled; if a stock install is active elsewhere it answers on 8765.) Anki must be open. Protocol:
+Agent Connect is a fork of AnkiConnect that makes large Anki jobs fast, atomic, and reviewable. It serves **everything on port 8766** — the 38 Agent Connect actions *and* the full upstream AnkiConnect surface (decks, models, GUI, `findNotes`, `storeMediaFile`), since it is a fork of the whole codebase. (On Matt's machine stock AnkiConnect is disabled; if a stock install is active elsewhere it answers on 8765.) Anki must be open. Protocol:
 
 ```
 POST http://localhost:8766   {"action": "...", "version": 6, "params": {...}}

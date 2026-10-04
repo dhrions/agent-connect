@@ -42,7 +42,7 @@ from anki.errors import (FilteredDeckError, Interrupted, InvalidInput,
                          NetworkError, NotFoundError, SearchError, SyncError,
                          SyncErrorKind)
 
-PLUS_VERSION = "1.5.0"
+PLUS_VERSION = "1.6.0"
 # The SPEC revision this code implements, kept in lockstep with SPEC.md's
 # "Version: <PLUS_VERSION> (spec revision <PLUS_SPEC_REVISION>" header (test-
 # locked). Revision 15 is the first revision that changed what two actions DO
@@ -64,8 +64,13 @@ PLUS_VERSION = "1.5.0"
 # Submit. Deliberately no auto-submit variant and ZERO AnkiHub code/network
 # touched by this action, per AnkiHub's ToS automated-use clause and the
 # project's written-permission constraint) and again changes NO existing
-# action's defaults: same rule, minor moves (1.4.0 -> 1.5.0).
-PLUS_SPEC_REVISION = 20
+# action's defaults: same rule, minor moves (1.4.0 -> 1.5.0). Revision 21 adds
+# ONE action (SPEC 34, changeNoteType — convert notes to another notetype while
+# KEEPING their cards, so revlog/scheduling/FSRS survive; the first and only
+# Plus action that modifies the schema, so its real run forces the next sync to
+# be a full upload) and again changes NO existing action's defaults: same rule,
+# minor moves (1.5.0 -> 1.6.0).
+PLUS_SPEC_REVISION = 21
 PLUS_ACTIONS = ["bulkAddNotes", "bulkUpdateNoteFields", "bulkAddTags",
                 "addImageOcclusionNote", "getImageOcclusionNote",
                 "updateImageOcclusionNote", "queryRevlog", "createBackup",
@@ -125,6 +130,8 @@ PLUS_ACTIONS = ["bulkAddNotes", "bulkUpdateNoteFields", "bulkAddTags",
                 "getEmptyCards",
                 # delete empty cards the way anki's own dialog does: never a note's last card, one undoable batch
                 "deleteEmptyCards",
+                # convert notes to another notetype KEEPING their cards (ids, revlog, scheduling); name-based field/template remap, one undoable op (modifies schema -> next sync is full)
+                "changeNoteType",
                 "plusInfo"]
 # One-line summaries served by plusInfo's actionDocs (SPEC 4.9): the
 # discoverability surface for LLM callers. Keep every PLUS_ACTIONS name
@@ -166,6 +173,7 @@ PLUS_ACTION_SUMMARIES = {
     "rebuildFilteredDeck": "Empty-then-regather ONE existing filtered deck by its SAVED search terms (col.sched.rebuild_filtered_deck — the deck's own Rebuild button): cards go home, then the saved searches gather from scratch, one undoable op. Reports both halves honestly: returnedFirst (pre-op residency, observed before the op) and cardsGathered (post-op residency). Rebuilding to zero is legal and leaves the deck empty (anki's behavior); rebuilding an EMPTY deck whose saved terms would also gather nothing is a reported no-op (nothing written, no undo entry). Exactly one of deckName/deckId; a regular deck is [validation_error]. dryRun predicts wouldReturn + wouldGather with the same exact/bounds semantics as createFilteredDeck — except the deck's OWN cards count as re-gatherable — and termsIgnored counts saved terms beyond the two anki actually gathers.",
     "getEmptyCards": "Anki's Tools > Empty Cards report as data (read-only): per note, the empty cards' ids and ordinals, exactly which of them deleteEmptyCards would delete, and the one card it would PROTECT when every card of the note is empty (deletion never removes a note's last card — anki's own dialog rule). Optional deckName scopes to notes with at least one empty card homed in that subtree. checkDeckIntegrity's clozeCardMismatch DETECTS the drift; this is the actionable report.",
     "deleteEmptyCards": "Delete empty cards as one undoable batch, honoring the same protection as anki's own Empty Cards dialog with 'keep notes' on: an all-empty note keeps its first card (reported in 'protected') and the note itself is NEVER deleted — notesPreserved post-checks that. noteIds=null acts on everything the live report finds; requested ids without empty cards land in skipped with a reason. dryRun previews the exact card ids.",
+    "changeNoteType": "Convert notes to a different notetype and KEEP their cards: retained cards keep their id, so review history (revlog), scheduling and FSRS state ride along — unlike delete-and-recreate, which resets every card. One backend op, one undo entry. All noteIds must currently share ONE source notetype (the backend maps a single old->new per call); a mixed selection is refused with [validation_error] naming the notetypes found, and a target identical to the source is [validation_error]. newModelName must name an existing notetype ([not_found] otherwise; notetypes are never auto-created). fieldMap/templateMap are {newName: oldName|null} overrides layered on anki's default by-name mapping: a target field/template fed by oldName takes that source's content/cards, null leaves the target field empty / makes the target card brand-new; an unknown target or source name is [invalid_param]. Retained-template cards keep their id, dropped-template cards are deleted, target templates with no source yield fresh cards. This is the ONLY Plus action that MODIFIES THE SCHEMA, so the NEXT sync is a full upload (schemaModified:true); it stays undoable as one entry. dryRun predicts the resolved fieldMapping/templateMapping and the kept/added/dropped template counts without writing.",
     "plusInfo": "Name/version/specRevision/action list plus per-action actionDocs (summary + params + returns, plus 'preserves' on side-effectful actions: what the action does NOT touch), an 'errorCodes' map, 'effectiveConfig' (the SPEC 27 knobs resolved for THIS install at call time, each {value, source}), and a 'recipes' list of named call patterns; works before a profile is open.",
 }
 
@@ -455,6 +463,21 @@ PLUS_ACTION_RETURNS = {
         "An all-protected or empty target set is a data no-op: cardsDeleted 0, undoEntry "
         "null, nothing written. dryRun=true returns {wouldDelete: [cardId], notesAffected, "
         "protected, skipped, undoEntry: null}.",
+    "changeNoteType":
+        "{changed: int, changedIds: [noteId], oldNotetype: str, newNotetype: str, "
+        "fieldMapping: [{new, from}], templateMapping: [{new, from}], templatesKept: int, "
+        "templatesAdded: int, templatesDropped: int, schemaModified: true, undoEntry: str|null} "
+        "— changedIds echoes the request order. fieldMapping/templateMapping are the RESOLVED "
+        "mapping actually applied: one entry per TARGET field/template, 'from' naming the source "
+        "field/template its content/cards came from, or null (empty target field / brand-new "
+        "card). templatesKept counts target templates mapped to an existing source card (those "
+        "cards keep their id, revlog and scheduling); templatesAdded counts target templates with "
+        "no source (fresh cards generated per note); templatesDropped counts source templates no "
+        "target maps to (their cards are deleted). schemaModified is ALWAYS true on a real run: "
+        "this op dirties the schema, so the next sync is a full upload. dryRun=true instead "
+        "returns {wouldChange: int, oldNotetype, newNotetype, fieldMapping, templateMapping, "
+        "templatesKept, templatesAdded, templatesDropped, undoEntry: null} — a prediction that "
+        "writes nothing (no changedIds, no schemaModified key).",
     "plusInfo":
         "{name: str, version: str, specRevision: int (the SPEC revision this build "
         "implements; version's minor moves whenever DEFAULT BEHAVIOR does, so a cached "
@@ -603,6 +626,14 @@ PLUS_ACTION_PRESERVES = {
         "note keeps its first card ('protected'). Every non-empty card, and every surviving "
         "card's scheduling/suspension/flags/deck assignment; fields, tags, note ids, GUIDs "
         "untouched. Deletes exactly the reported empty card ids, nothing else.",
+    "changeNoteType":
+        "Note ids and GUIDs, tags, and the review history of every RETAINED card: a card whose "
+        "template is mapped keeps its id, so its revlog, scheduling and FSRS state are untouched "
+        "(the whole point of the action). NOT preserved — the conversion is the job: each note's "
+        "notetype (mid) and field set change; cards of DROPPED templates are deleted and target "
+        "templates with no source get FRESH cards; field CONTENT is remapped (a null-mapped "
+        "target field is emptied). The collection SCHEMA is dirtied, forcing the next sync to be "
+        "a full upload.",
     "createBackup":
         "The entire collection — a backup is a READ of it into a new .colpkg in the profile's "
         "backups folder; no note, card, deck, tag or scheduling state changes.",
@@ -761,7 +792,7 @@ PLUS_ERROR_CODE_DOCS = {
 # The one boundary rule a client cannot infer from a single response (SPEC 25,
 # revision 13): the '[code] ' prefix is NOT universal across this server.
 PLUS_ERROR_PREFIX_NOTE = (
-    "Prefixing boundary: errors from the 37 Agent Connect actions AND the dispatcher's unknown-action "
+    "Prefixing boundary: errors from the 38 Agent Connect actions AND the dispatcher's unknown-action "
     "error carry a '[code] ' prefix and populate the response's errorCode/retryable fields. "
     "EVERY OTHER error is passed through verbatim and UNPREFIXED, with errorCode: null and "
     "retryable: null — that is the ~90 UPSTREAM AnkiConnect actions, the dispatcher's api-key "
@@ -1053,6 +1084,7 @@ UNDO_CREATE_FILTERED = 'Agent Connect: Create Filtered Deck'
 UNDO_REBUILD_FILTERED = 'Agent Connect: Rebuild Filtered Deck'
 UNDO_DELETE_EMPTY = 'Agent Connect: Delete Empty Cards'
 UNDO_STAGE_OPTIONAL_TAG = 'Agent Connect: Stage Optional Tag'
+UNDO_CHANGE_NOTETYPE = 'Agent Connect: Change Note Type'
 
 # undoLabel (SPEC 24): every write action takes an optional undoLabel whose
 # sanitized form becomes the undo entry name 'Agent Connect: <label>', so
@@ -3838,6 +3870,155 @@ def rename_tag(col, old_tag, new_tag, dry_run=False, undo_label=None):
                 'undoEntry': None}
     return {'notesUpdated': notes_updated, 'tagsRewritten': rewritten,
             'merged': merged, 'undoEntry': undo_name}
+
+
+def _is_name_map(mapping):
+    # {str: str|null} — the shape fieldMap/templateMap accept
+    return (isinstance(mapping, dict)
+            and all(isinstance(k, str) for k in mapping)
+            and all(v is None or isinstance(v, str) for v in mapping.values()))
+
+
+def _apply_name_map(name_map, new_names, old_names, repeated, param):
+    """Override the default int mapping `repeated` (a protobuf repeated scalar,
+    one entry per TARGET field/template) in place from a {newName: oldName|null}
+    dict. Entries not mentioned keep Anki's default mapping. A key that is not a
+    target name, or a non-null value that is not a source name, is [invalid_param]
+    — caught before any write so the dry run refuses exactly what the real run
+    would."""
+    if name_map is None:
+        return
+    for new_name, old_name in name_map.items():
+        if new_name not in new_names:
+            raise PlusError('invalid_param',
+                            'invalid parameter: {}: target notetype has no "{}"'.format(param, new_name))
+        i = new_names.index(new_name)
+        if old_name is None or old_name == '':
+            repeated[i] = -1
+        elif old_name not in old_names:
+            raise PlusError('invalid_param',
+                            'invalid parameter: {}: source notetype has no "{}"'.format(param, old_name))
+        else:
+            repeated[i] = old_names.index(old_name)
+
+
+def change_note_type(col, note_ids, new_model_name, field_map=None,
+                     template_map=None, dry_run=False, undo_label=None):
+    """Convert notes to a different notetype, KEEPING their cards (SPEC 34).
+
+    The point of the action: col.models.change_notetype_of_notes reuses each
+    retained card's id, so its review history (revlog), scheduling and FSRS
+    state ride along — unlike delete-and-recreate, which starts every card from
+    zero and loses the log. One backend op, one undo entry.
+
+    All noteIds must currently share ONE source notetype (the backend maps a
+    single old->new per call); a mixed selection is refused with
+    [validation_error] naming the notetypes found, so the caller splits per
+    group. newModelName must name an existing notetype ([not_found] otherwise);
+    notetypes are never auto-created, and a target identical to the source is
+    [validation_error] (nothing to convert).
+
+    fieldMap / templateMap are {newName: oldName|null} overrides layered on top
+    of Anki's default by-name mapping: a target field/template fed by oldName
+    takes its content/cards from that source; null leaves the target field empty
+    / makes the target card brand-new (no source). Every KEY must be a
+    field/template name of the TARGET notetype and every non-null VALUE a name
+    of the SOURCE notetype, else [invalid_param]. Retained-template cards keep
+    their id (and revlog); dropped-template cards are deleted; target templates
+    with no source yield fresh cards.
+
+    This is the only Agent Connect action that MODIFIES THE SCHEMA: a real run
+    marks the collection changed, so the NEXT sync is a full upload
+    (schemaModified: true in the result). It stays undoable as one entry.
+    dryRun predicts the resolved mapping plus the kept/added/dropped template
+    counts and writes nothing.
+    """
+    undo_name = sanitize_undo_label(undo_label) or UNDO_CHANGE_NOTETYPE
+    if not isinstance(note_ids, list) or not note_ids:
+        raise PlusError('invalid_param', 'invalid parameter: noteIds: non-empty list required')
+    if any(isinstance(nid, bool) or not isinstance(nid, int) for nid in note_ids):
+        raise PlusError('invalid_param', 'invalid parameter: noteIds: list of note ids required')
+    if not isinstance(new_model_name, str) or not new_model_name:
+        raise PlusError('invalid_param', 'invalid parameter: newModelName: string required')
+    if field_map is not None and not _is_name_map(field_map):
+        raise PlusError('invalid_param', 'invalid parameter: fieldMap: object of {string: string|null} required')
+    if template_map is not None and not _is_name_map(template_map):
+        raise PlusError('invalid_param', 'invalid parameter: templateMap: object of {string: string|null} required')
+    if not isinstance(dry_run, bool):
+        raise PlusError('invalid_param', 'invalid parameter: dryRun: boolean required')
+
+    target_model = col.models.by_name(new_model_name)
+    if target_model is None:
+        raise PlusError('not_found', 'notetype was not found: {}'.format(new_model_name))
+
+    # every noteId must exist AND share one source notetype — the backend's unit
+    missing = []
+    source_counts = {}
+    for nid in note_ids:
+        try:
+            note = col.get_note(nid)
+        except NotFoundError:
+            missing.append(nid)
+            continue
+        source_counts[note.mid] = source_counts.get(note.mid, 0) + 1
+    if missing:
+        raise PlusError('not_found', 'notes were not found: {}'.format(
+            ', '.join(str(n) for n in missing)))
+    if len(source_counts) > 1:
+        found = ', '.join(sorted('{} ({})'.format(col.models.get(mid)['name'], count)
+                                 for mid, count in source_counts.items()))
+        raise PlusError('validation_error',
+                        'all noteIds must currently share one notetype; found: {}'.format(found))
+
+    old_mid = next(iter(source_counts))
+    if old_mid == target_model['id']:
+        raise PlusError('validation_error',
+                        'source and target notetype are the same: {}'.format(target_model['name']))
+    old_model = col.models.get(old_mid)
+
+    info = col.models.change_notetype_info(
+        old_notetype_id=old_mid, new_notetype_id=target_model['id'])
+    req = info.input
+    old_field_names = list(info.old_field_names)
+    new_field_names = list(info.new_field_names)
+    old_template_names = list(info.old_template_names)
+    new_template_names = list(info.new_template_names)
+
+    _apply_name_map(field_map, new_field_names, old_field_names, req.new_fields, 'fieldMap')
+    _apply_name_map(template_map, new_template_names, old_template_names, req.new_templates, 'templateMap')
+
+    field_mapping = [{'new': new_field_names[i], 'from': old_field_names[o] if o >= 0 else None}
+                     for i, o in enumerate(req.new_fields)]
+    template_mapping = [{'new': new_template_names[i], 'from': old_template_names[o] if o >= 0 else None}
+                        for i, o in enumerate(req.new_templates)]
+    referenced = {o for o in req.new_templates if o >= 0}
+    templates_kept = len(referenced)
+    templates_added = sum(1 for o in req.new_templates if o == -1)
+    templates_dropped = len(old_template_names) - templates_kept
+
+    if dry_run:
+        return {'wouldChange': len(note_ids), 'oldNotetype': old_model['name'],
+                'newNotetype': target_model['name'], 'fieldMapping': field_mapping,
+                'templateMapping': template_mapping, 'templatesKept': templates_kept,
+                'templatesAdded': templates_added, 'templatesDropped': templates_dropped,
+                'undoEntry': None}
+
+    req.note_ids[:] = note_ids
+    target = col.add_custom_undo_entry(undo_name)
+    try:
+        col.models.change_notetype_of_notes(req)
+        col.merge_undo_entries(target)
+    except Exception as e:
+        _revert_batch(col, undo_name)
+        raise PlusError('batch_reverted',
+                        'changeNoteType failed (batch reverted): {}'.format(e))
+
+    return {'changed': len(note_ids), 'changedIds': list(note_ids),
+            'oldNotetype': old_model['name'], 'newNotetype': target_model['name'],
+            'fieldMapping': field_mapping, 'templateMapping': template_mapping,
+            'templatesKept': templates_kept, 'templatesAdded': templates_added,
+            'templatesDropped': templates_dropped, 'schemaModified': True,
+            'undoEntry': undo_name}
 
 
 #

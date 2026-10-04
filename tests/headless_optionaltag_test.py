@@ -338,11 +338,11 @@ def test1_registry_lockstep():
     assert name in core.PLUS_ACTIONS, core.PLUS_ACTIONS
     assert core.PLUS_ACTIONS[-1] == "plusInfo"
     # 36 -> 37: revision-20 SPEC 33 adds this suite's action
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
-    assert len(set(core.PLUS_ACTIONS)) == 37, "duplicate action names"
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
+    assert len(set(core.PLUS_ACTIONS)) == 38, "duplicate action names"
 
-    assert core.PLUS_VERSION == "1.5.0", core.PLUS_VERSION
-    assert core.PLUS_SPEC_REVISION == 20, core.PLUS_SPEC_REVISION
+    assert core.PLUS_VERSION == "1.6.0", core.PLUS_VERSION
+    assert core.PLUS_SPEC_REVISION == 21, core.PLUS_SPEC_REVISION
 
     summary = core.PLUS_ACTION_SUMMARIES[name]
     assert "HUMAN" in summary and "Submit" in summary, summary
@@ -387,23 +387,23 @@ def test1_registry_lockstep():
     assert recipe["example"]["action"] == name
 
     # the prefix-note count moved with the registry
-    assert "%d Plus actions" % len(core.PLUS_ACTIONS) in core.PLUS_ERROR_PREFIX_NOTE
+    assert "%d Agent Connect actions" % len(core.PLUS_ACTIONS) in core.PLUS_ERROR_PREFIX_NOTE
 
     # SPEC / README / SKILL lockstep
     with open(os.path.join(REPO, "SPEC.md"), encoding="utf-8") as fh:
         spec_text = fh.read()
-    assert "Version: 1.5.0 (spec revision 20" in spec_text[:8192]
+    assert "Version: 1.6.0 (spec revision 21" in spec_text[:8192]
     assert "## 33. Staged optional-tag suggestion" in spec_text
     assert "GUI-COUPLED" in spec_text
     with open(os.path.join(REPO, "README.md"), encoding="utf-8") as fh:
         readme = fh.read()
     assert "`%s`" % name in readme
-    assert "**37 new actions**" in readme
+    assert "**38 new actions**" in readme
     assert "**36 new actions**" not in readme
     with open(os.path.join(REPO, "skills", "anki-bulk-cards", "SKILL.md"),
               encoding="utf-8") as fh:
         skill_text = fh.read()
-    assert "37 Plus actions" in skill_text
+    assert "38 Agent Connect actions" in skill_text
 
 
 # ===========================================================================
@@ -722,7 +722,7 @@ def test10_served_surface():
     name = "ankihubStageOptionalTagSuggestion"
     info = stubbed_info()
     assert name in info["actions"]
-    assert len(info["actions"]) == 37
+    assert len(info["actions"]) == 38
     doc = info["actionDocs"][name]
     assert doc["params"] == "tag, noteIds, dryRun=false, undoLabel=null", doc
     assert doc["summary"] == core.PLUS_ACTION_SUMMARIES[name]
@@ -739,7 +739,7 @@ def test10_served_surface():
     assert sig.parameters["undoLabel"].default is None
 
 
-run("1  registry + docs lockstep (37 actions, 1.5.0/rev 20, recipe, counts)",
+run("1  registry + docs lockstep (38 actions, 1.6.0/rev 21, recipe, counts)",
     test1_registry_lockstep)
 run("2  boundary grep: no posting method, no dialog class, no gui import",
     test2_tos_regression_grep)

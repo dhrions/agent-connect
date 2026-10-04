@@ -10,7 +10,7 @@
 
 **A fork of [AnkiConnect](https://foosoft.net/projects/anki-connect/) by Alex Yatskov (FooSoft Productions), GPLv3. Not affiliated with or endorsed by the original author.**
 
-Agent Connect keeps everything AnkiConnect does and adds 37 actions built for driving Anki from a script or an AI agent — where the work is done in bulk, and where a mistake is expensive.
+Agent Connect keeps everything AnkiConnect does and adds 38 actions built for driving Anki from a script or an AI agent — where the work is done in bulk, and where a mistake is expensive.
 
 **What it adds**
 

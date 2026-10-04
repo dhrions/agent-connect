@@ -602,6 +602,14 @@ class PlusMixin:
                                        dry_run=dryRun, undo_label=undoLabel)
 
 
+    @plus_api()
+    def changeNoteType(self, noteIds, newModelName, fieldMap=None, templateMap=None,
+                       dryRun=False, undoLabel=None):
+        return core.change_note_type(self.collection(), noteIds, newModelName,
+                                     field_map=fieldMap, template_map=templateMap,
+                                     dry_run=dryRun, undo_label=undoLabel)
+
+
     #
     # Sync (SPEC 18): async job + polling; normal sync only, zero dialogs.
     # The job dict is mutated ONLY on the Qt main thread: HTTP handlers run

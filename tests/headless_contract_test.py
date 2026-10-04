@@ -1,5 +1,5 @@
 # INDEPENDENT round-1 verification of the revision-18 contract, updated in
-# lockstep to the revision-20 surface (v1.5.0, 37 actions).
+# lockstep to the revision-21 surface (v1.6.0, 38 actions).
 #
 # Written by the verifier, not the implementer: fixtures, rigs and assertions
 # are built fresh from SPEC 31 / 27 and the shipped artifacts, so agreement
@@ -35,8 +35,8 @@
 #      tags kept), deleteEmptyCards (surviving card's scheduling untouched,
 #      note never deleted), bulkSetFlag (due/ivl untouched; only the user
 #      bits of the flags byte change — a pre-set non-user bit survives).
-#   6. Lockstep: PLUS_VERSION 1.5.0, PLUS_SPEC_REVISION 20, the SPEC.md
-#      header agrees, 37 actions, and plusInfo serves the same three.
+#   6. Lockstep: PLUS_VERSION 1.6.0, PLUS_SPEC_REVISION 21, the SPEC.md
+#      header agrees, 38 actions, and plusInfo serves the same three.
 #
 # Run with: <anki-venv>/bin/python headless_contract_test.py
 #
@@ -563,27 +563,27 @@ def test5_preserves_claims_empirical():
 
 
 # ===========================================================================
-# 6 — lockstep: version/revision constants, SPEC header, action count 37
+# 6 — lockstep: version/revision constants, SPEC header, action count 38
 # ===========================================================================
 def test6_lockstep():
-    assert core.PLUS_VERSION == "1.5.0", core.PLUS_VERSION
-    assert core.PLUS_SPEC_REVISION == 20, core.PLUS_SPEC_REVISION
+    assert core.PLUS_VERSION == "1.6.0", core.PLUS_VERSION
+    assert core.PLUS_SPEC_REVISION == 21, core.PLUS_SPEC_REVISION
 
     with open(os.path.join(REPO, "SPEC.md"), encoding="utf-8") as handle:
         header = handle.readline() + handle.read(4096)
-    assert "Version: 1.5.0 (spec revision 20" in header, \
+    assert "Version: 1.6.0 (spec revision 21" in header, \
         "SPEC.md header disagrees with core constants"
 
     # 36 -> 37: revision-20 SPEC 33 adds ankihubStageOptionalTagSuggestion
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
-    assert len(set(core.PLUS_ACTIONS)) == 37, "duplicate action names"
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
+    assert len(set(core.PLUS_ACTIONS)) == 38, "duplicate action names"
 
     plus = load_plus()
     info = stubbed_info(plus)
-    assert info["version"] == "1.5.0", info["version"]
-    assert info["specRevision"] == 20, info["specRevision"]
+    assert info["version"] == "1.6.0", info["version"]
+    assert info["specRevision"] == 21, info["specRevision"]
     assert info["actions"] == list(core.PLUS_ACTIONS)
-    assert len(info["actions"]) == 37
+    assert len(info["actions"]) == 38
     # every action is documented on the live surface; wrappers all exist
     for name in core.PLUS_ACTIONS:
         entry = info["actionDocs"][name]

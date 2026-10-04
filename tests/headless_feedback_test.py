@@ -589,10 +589,10 @@ def test7_plus_info_action_docs():
     #   getEmptyCards, deleteEmptyCards
     # + revision-19 SPEC 32: createFilteredDeck, rebuildFilteredDeck
     # + revision-20 SPEC 33: ankihubStageOptionalTagSuggestion)
-    assert len(core.PLUS_ACTIONS) == 37, core.PLUS_ACTIONS
+    assert len(core.PLUS_ACTIONS) == 38, core.PLUS_ACTIONS
     assert set(docs) == set(core.PLUS_ACTIONS), \
         sorted(set(docs) ^ set(core.PLUS_ACTIONS))
-    assert len(docs) == 37, len(docs)
+    assert len(docs) == 38, len(docs)
 
     # summary non-empty for EVERY action; params never leak 'self'
     for name in core.PLUS_ACTIONS:

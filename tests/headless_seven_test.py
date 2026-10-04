@@ -122,8 +122,8 @@ def test0_actions_registered():
     #           getEmptyCards, deleteEmptyCards)
     #         + revision-19 SPEC 32 (createFilteredDeck, rebuildFilteredDeck)
     #         + revision-20 SPEC 33 (ankihubStageOptionalTagSuggestion)
-    assert len(core.PLUS_ACTIONS) == 37, core.PLUS_ACTIONS
-    assert len(set(core.PLUS_ACTIONS)) == 37, "duplicate action names"
+    assert len(core.PLUS_ACTIONS) == 38, core.PLUS_ACTIONS
+    assert len(set(core.PLUS_ACTIONS)) == 38, "duplicate action names"
     assert core.PLUS_ACTIONS[-1] == "plusInfo"
     # summaries lockstep (SPEC 4.9): every action documented, no strays
     assert set(core.PLUS_ACTION_SUMMARIES) == set(core.PLUS_ACTIONS), (

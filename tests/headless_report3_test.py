@@ -1277,12 +1277,12 @@ def test_ask1_plus_info_surface():
 
     # --- 37 actions (36 -> 37: revision-20 SPEC 33 adds
     # ankihubStageOptionalTagSuggestion), each with a NON-EMPTY 'returns'
-    assert len(pkg_core.PLUS_ACTIONS) == 37, len(pkg_core.PLUS_ACTIONS)
-    assert len(set(pkg_core.PLUS_ACTIONS)) == 37, "duplicate action name"
+    assert len(pkg_core.PLUS_ACTIONS) == 38, len(pkg_core.PLUS_ACTIONS)
+    assert len(set(pkg_core.PLUS_ACTIONS)) == 38, "duplicate action name"
     assert info["actions"] == list(pkg_core.PLUS_ACTIONS)
     assert set(info["actionDocs"]) == set(pkg_core.PLUS_ACTIONS), \
         sorted(set(info["actionDocs"]) ^ set(pkg_core.PLUS_ACTIONS))
-    assert len(info["actionDocs"]) == 37
+    assert len(info["actionDocs"]) == 38
     for name in pkg_core.PLUS_ACTIONS:
         entry = info["actionDocs"][name]
         # revision 18: side-effectful actions carry a fourth key, 'preserves'

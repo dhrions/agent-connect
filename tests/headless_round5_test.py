@@ -127,6 +127,8 @@ SIDE_EFFECTFUL = {
     "ankihubSuggestNoteUpdate", "ankihubSuggestNewNote",
     # revision-20 SPEC 33: writes the staged notes' tag lists locally
     "ankihubStageOptionalTagSuggestion",
+    # revision-21 SPEC 34: changes a note's type in place
+    "changeNoteType",
 }
 
 
@@ -178,8 +180,8 @@ def test1_stale_default_sweep():
         assert token in spec_text, token
 
     # version/revision moved (revision-20 minor bump: new capability)
-    assert core.PLUS_VERSION == "1.5.0", core.PLUS_VERSION
-    assert core.PLUS_SPEC_REVISION == 20, core.PLUS_SPEC_REVISION
+    assert core.PLUS_VERSION == "1.6.0", core.PLUS_VERSION
+    assert core.PLUS_SPEC_REVISION == 21, core.PLUS_SPEC_REVISION
 
     # README + config.md name the new surfaces
     readme = open(os.path.join(REPO, "README.md"), encoding="utf-8").read()

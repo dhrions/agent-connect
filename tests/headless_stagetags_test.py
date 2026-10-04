@@ -739,21 +739,21 @@ def test8_tos_boundary():
 
 
 # ===========================================================================
-# 9 — lockstep: 37 actions, 1.5.0 / revision 20, SPEC header, served docs
+# 9 — lockstep: 38 actions, 1.6.0 / revision 21, SPEC header, served docs
 #     match the CAPTURED shapes, GUI-coupled caveat served, undo-label +
 #     nextStep constants, recipe, README count, dialog keys GONE
 # ===========================================================================
 def test9_lockstep_and_served_docs():
     assert ACTION in core.PLUS_ACTIONS
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
-    assert len(set(core.PLUS_ACTIONS)) == 37
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
+    assert len(set(core.PLUS_ACTIONS)) == 38
     assert core.PLUS_ACTIONS[-1] == "plusInfo"
-    assert core.PLUS_VERSION == "1.5.0", core.PLUS_VERSION
-    assert core.PLUS_SPEC_REVISION == 20, core.PLUS_SPEC_REVISION
+    assert core.PLUS_VERSION == "1.6.0", core.PLUS_VERSION
+    assert core.PLUS_SPEC_REVISION == 21, core.PLUS_SPEC_REVISION
 
     with open(os.path.join(REPO, "SPEC.md"), encoding="utf-8") as fh:
         head = fh.read(8192)
-    assert "Version: 1.5.0 (spec revision 20" in head, head[:200]
+    assert "Version: 1.6.0 (spec revision 21" in head, head[:200]
 
     # undo-label + nextStep lockstep; dialog-era constants are gone
     assert core.UNDO_STAGE_OPTIONAL_TAG == "Agent Connect: Stage Optional Tag"
@@ -774,10 +774,10 @@ def test9_lockstep_and_served_docs():
     finally:
         util_mod.setting = orig_setting
 
-    assert info["version"] == "1.5.0"
-    assert info["specRevision"] == 20
+    assert info["version"] == "1.6.0"
+    assert info["specRevision"] == 21
     assert info["actions"] == list(core.PLUS_ACTIONS)
-    assert len(info["actionDocs"]) == 37
+    assert len(info["actionDocs"]) == 38
 
     doc = info["actionDocs"][ACTION]
     # GUI-coupled caveat is SERVED (summary carries it verbatim), and the
@@ -831,7 +831,7 @@ def test9_lockstep_and_served_docs():
     with open(os.path.join(REPO, "README.md"), encoding="utf-8") as fh:
         readme = fh.read()
     assert "`%s`" % ACTION in readme
-    assert "**37 new actions**" in readme
+    assert "**38 new actions**" in readme
     assert "**36 new actions**" not in readme
 
 

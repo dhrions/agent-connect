@@ -527,7 +527,7 @@ def test9_actions_registered():
     # 37 = 26 + round-3 SPEC 26 undoStatus + round-4 SPEC 28 + SPEC 29/30
     #      + revision-19 SPEC 32 (createFilteredDeck, rebuildFilteredDeck)
     #      + revision-20 SPEC 33 (ankihubStageOptionalTagSuggestion)
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
     assert "undoStatus" in core.PLUS_ACTIONS
     assert set(core.PLUS_ACTIONS) == set(core.PLUS_ACTION_SUMMARIES)
     assert core.PLUS_ACTION_SUMMARIES["mediaExists"]

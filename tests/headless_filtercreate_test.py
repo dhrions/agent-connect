@@ -32,7 +32,7 @@
 #   6. Lifecycle: create -> filteredDeckReport sees it -> exportDeckApkg on
 #      the home deck refuses [cards_in_filtered_decks] -> emptyFilteredDeck
 #      returns the cards -> export succeeds. One test, the full loop.
-#   7. Lockstep: PLUS_VERSION 1.5.0, PLUS_SPEC_REVISION 20, 37 actions,
+#   7. Lockstep: PLUS_VERSION 1.6.0, PLUS_SPEC_REVISION 21, 38 actions,
 #      SPEC.md header agrees, both new actions' served returns docs name
 #      every top-level key of every REAL captured response shape (real,
 #      dry, no-op), and the served preserves lines are the ones tests 1/5
@@ -724,25 +724,25 @@ def test6_lifecycle():
 #     the served preserves lines are the empirically verified ones
 # ===========================================================================
 def test7_lockstep():
-    assert core.PLUS_VERSION == "1.5.0", core.PLUS_VERSION
-    assert core.PLUS_SPEC_REVISION == 20, core.PLUS_SPEC_REVISION
+    assert core.PLUS_VERSION == "1.6.0", core.PLUS_VERSION
+    assert core.PLUS_SPEC_REVISION == 21, core.PLUS_SPEC_REVISION
     # 36 -> 37: revision-20 SPEC 33 adds ankihubStageOptionalTagSuggestion
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
-    assert len(set(core.PLUS_ACTIONS)) == 37, "duplicate action names"
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
+    assert len(set(core.PLUS_ACTIONS)) == 38, "duplicate action names"
     for action in ("createFilteredDeck", "rebuildFilteredDeck"):
         assert action in core.PLUS_ACTIONS, action
 
     # the SPEC.md header names the same version + revision
     with open(os.path.join(REPO, "SPEC.md"), encoding="utf-8") as handle:
         head = handle.read(8192)
-    assert "Version: 1.5.0 (spec revision 20" in head, \
+    assert "Version: 1.6.0 (spec revision 21" in head, \
         "SPEC.md header disagrees with core constants"
 
     info = stubbed_info()
-    assert info["version"] == "1.5.0" and info["specRevision"] == 20
-    assert len(info["actions"]) == 37
+    assert info["version"] == "1.6.0" and info["specRevision"] == 21
+    assert len(info["actions"]) == 38
     assert set(info["actions"]) == set(core.PLUS_ACTIONS)
-    assert len(info["actionDocs"]) == 37
+    assert len(info["actionDocs"]) == 38
 
     # both actions' docs served complete; preserves is the same line the
     # empirical tests above verified (suspension/burial never gathered,
@@ -817,7 +817,7 @@ run("5b rebuild refusals + rebuild-to-zero + gated full no-op",
     test5b_rebuild_refusals_and_noops)
 run("6  lifecycle: create -> report -> export refused -> empty -> export "
     "clean", test6_lifecycle)
-run("7  lockstep: 1.5.0 / rev 20 / 37 actions; returns docs vs captured "
+run("7  lockstep: 1.6.0 / rev 21 / 38 actions; returns docs vs captured "
     "shapes; served preserves", test7_lockstep)
 
 col.close()

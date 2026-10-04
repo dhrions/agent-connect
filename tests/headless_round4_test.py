@@ -445,7 +445,7 @@ def test10_lockstep_and_wrappers():
         assert core.PLUS_ACTION_SUMMARIES[name].strip(), name
         assert core.PLUS_ACTION_RETURNS[name].startswith("{"), name
     # 36 -> 37: revision-20 SPEC 33 adds ankihubStageOptionalTagSuggestion
-    assert len(core.PLUS_ACTIONS) == 37, len(core.PLUS_ACTIONS)
+    assert len(core.PLUS_ACTIONS) == 38, len(core.PLUS_ACTIONS)
     assert core.PLUS_ACTIONS[-1] == "plusInfo"
     assert core.UNDO_RENAME_DECK == "Agent Connect: Rename Deck"
     assert core.UNDO_BULK_FLAG == "Agent Connect: Bulk Flag"
@@ -453,7 +453,7 @@ def test10_lockstep_and_wrappers():
     # revision 17: the occupied-name refusal made 'duplicate' reachable
     assert core.PLUS_ERROR_CODE_DOCS["duplicate"]["reachable"] is True
     assert core.PLUS_ERROR_CODES["duplicate"] is False  # still not retryable
-    assert "37 Plus actions" in core.PLUS_ERROR_PREFIX_NOTE
+    assert "38 Agent Connect actions" in core.PLUS_ERROR_PREFIX_NOTE
 
     plus = _load_plus()
     util_mod = sys.modules["ancp_r4_pkg.util"]
